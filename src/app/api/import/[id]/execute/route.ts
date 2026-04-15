@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabasePublic, supabaseAdmin } from '@/lib/supabase';
+import { getSupabasePublic, getSupabaseAdmin } from '@/lib/supabase';
 import { toPublishedCsvUrl, fetchSheetRows } from '@/lib/sheets';
 import { enrichGuest } from '@/lib/enrichment';
 import type { MappingEntry } from '@/lib/inference';
@@ -34,8 +34,9 @@ function applyMapping(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   let body: { enrich?: boolean };
   try {
     body = await req.json();
@@ -45,10 +46,10 @@ export async function POST(
   const enrich = body.enrich ?? false;
 
   // Fetch session
-  const { data: session, error: fetchError } = await supabasePublic
+  const { data: session, error: fetchError } = await getSupabasePublic()
     .from('import_sessions')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (fetchError || !session) {
@@ -108,11 +109,11 @@ export async function POST(
   // Attach import_session_id to each record
   const toInsert = records.map((r) => ({
     ...r,
-    import_session_id: params.id,
+    import_session_id: id,
   }));
 
   // Bulk insert
-  const { data: inserted, error: insertError } = await supabaseAdmin
+  const { data: inserted, error: insertError } = await getSupabaseAdmin()
     .from(entity_type)
     .insert(toInsert)
     .select();
@@ -125,10 +126,10 @@ export async function POST(
   const summary = `Imported ${importedCount} records into ${entity_type}.${enrichment_report ? ' ' + enrichment_report : ''}`;
 
   // Update session
-  await supabaseAdmin
+  await getSupabaseAdmin()
     .from('import_sessions')
     .update({ status: 'imported', row_count: importedCount, summary })
-    .eq('id', params.id);
+    .eq('id', id);
 
   const vercelUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`

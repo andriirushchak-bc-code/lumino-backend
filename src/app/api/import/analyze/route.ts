@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toPublishedCsvUrl, fetchSheetRows } from '@/lib/sheets';
 import { inferSchema, fetchKnownUsers } from '@/lib/inference';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   let body: { sheet_url?: string; user_email?: string };
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Insert import session
-  const { data: session, error: insertError } = await supabaseAdmin
+  const { data: session, error: insertError } = await getSupabaseAdmin()
     .from('import_sessions')
     .insert({
       user_email,

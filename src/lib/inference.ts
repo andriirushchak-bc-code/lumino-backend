@@ -1,5 +1,5 @@
 import { callGemini } from './gemini';
-import { supabasePublic } from './supabase';
+import { getSupabasePublic } from './supabase';
 
 export interface MappingEntry {
   excel_column: string;
@@ -101,7 +101,7 @@ Respond with ONLY this JSON shape — no markdown, no prose, no code fences:
 }
 
 export async function fetchKnownUsers(): Promise<{ email: string; full_name: string }[]> {
-  const { data, error } = await supabasePublic
+  const { data, error } = await getSupabasePublic()
     .from('users')
     .select('email, full_name');
   if (error) throw new Error(`Failed to fetch users: ${error.message}`);

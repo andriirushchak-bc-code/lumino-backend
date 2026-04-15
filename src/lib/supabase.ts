@@ -1,8 +1,24 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY!;
-const secretKey = process.env.SUPABASE_SECRET_KEY!;
+let _public: SupabaseClient | null = null;
+let _admin: SupabaseClient | null = null;
 
-export const supabasePublic = createClient(supabaseUrl, publishableKey);
-export const supabaseAdmin = createClient(supabaseUrl, secretKey);
+export function getSupabasePublic(): SupabaseClient {
+  if (!_public) {
+    _public = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!
+    );
+  }
+  return _public;
+}
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!_admin) {
+    _admin = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SECRET_KEY!
+    );
+  }
+  return _admin;
+}

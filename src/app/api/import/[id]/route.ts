@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabasePublic } from '@/lib/supabase';
+import { getSupabasePublic } from '@/lib/supabase';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { data, error } = await supabasePublic
+  const { id } = await params;
+  const { data, error } = await getSupabasePublic()
     .from('import_sessions')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (error || !data) {

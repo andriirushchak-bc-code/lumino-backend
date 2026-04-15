@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabasePublic, supabaseAdmin } from '@/lib/supabase';
+import { getSupabasePublic, getSupabaseAdmin } from '@/lib/supabase';
 import type { MappingEntry } from '@/lib/inference';
 
 interface MappingChange {
@@ -10,8 +10,9 @@ interface MappingChange {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   let body: { changes?: MappingChange[] };
   try {
     body = await req.json();
@@ -25,10 +26,10 @@ export async function PATCH(
   }
 
   // Fetch existing session
-  const { data: session, error: fetchError } = await supabasePublic
+  const { data: session, error: fetchError } = await getSupabasePublic()
     .from('import_sessions')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (fetchError || !session) {
@@ -58,10 +59,10 @@ export async function PATCH(
 
   const newDetectedMapping = { ...detectedMapping, mapping: updatedMapping };
 
-  const { data: updated, error: updateError } = await supabaseAdmin
+  const { data: updated, error: updateError } = await getSupabaseAdmin()
     .from('import_sessions')
     .update({ detected_mapping: newDetectedMapping, status: 'mapping_updated' })
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single();
 
