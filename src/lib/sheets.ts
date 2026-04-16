@@ -12,7 +12,9 @@ export function toPublishedCsvUrl(sheetUrl: string): string {
   const gidMatch = sheetUrl.match(/[?&#]gid=(\d+)/);
   const gid = gidMatch ? gidMatch[1] : '0';
 
-  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  // /gviz/tq works for publicly shared sheets without requiring "Publish to web"
+  // /export?format=csv was deprecated and now returns 400 for unauthenticated requests
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
 }
 
 export async function fetchSheetRows(
