@@ -1,4 +1,4 @@
-import Script from 'next/script';
+import BepWidget from './BepWidget';
 
 export const metadata = {
   title: 'Lumino Expense — Live Demo',
@@ -8,14 +8,7 @@ export const metadata = {
 export default function DemoPage() {
   return (
     <>
-      {/* BEP widget script */}
-      <Script
-        id="bep-widget"
-        src="https://platform.botscrew.net/widget/script-chatbot.js"
-        data-server-url="https://platform.botscrew.net/api"
-        data-bot-id="fae15a5c-0783-421f-b012-7934a7773b73"
-        strategy="afterInteractive"
-      />
+      <BepWidget />
 
       <div style={styles.page}>
         {/* ── Header ── */}
