@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumino Bot — Technical Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-elev: #161c25;
+    --bg-code: #0a0e14;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text: #e6e8eb;
+    --text-soft: #a5acb8;
+    --text-muted: #6b7280;
+    --accent: #7cc4f5;
+    --accent-soft: rgba(124, 196, 245, 0.1);
+    --accent-border: rgba(124, 196, 245, 0.3);
+    --amber: #f5b76b;
+    --amber-soft: rgba(245, 183, 107, 0.08);
+    --green: #86d192;
+    --green-soft: rgba(134, 209, 146, 0.08);
+    --red: #f07878;
+    --red-soft: rgba(240, 120, 120, 0.08);
+    --purple: #b991f0;
+    --purple-soft: rgba(185, 145, 240, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  aside {
+    background: var(--bg-elev);
+    border-right: 1px solid var(--border);
+    padding: 32px 24px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-mark {
+    width: 24px; height: 24px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    position: relative;
+  }
+  .brand-mark::after {
+    content: '';
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .brand-text {
+    font-family: 'IBM Plex Serif', serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  aside .nav-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 24px 0 10px;
+  }
+  aside .nav-label:first-of-type { margin-top: 0; }
+  aside nav a {
+    display: block;
+    padding: 6px 10px;
+    font-size: 13.5px;
+    color: var(--text-soft);
+    text-decoration: none;
+    border-radius: 6px;
+    margin: 1px 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  aside nav a:hover { background: rgba(255, 255, 255, 0.04); color: var(--text); }
+  aside nav a.sub { padding-left: 20px; font-size: 13px; color: var(--text-muted); }
+
+  /* Main */
+  main { padding: 48px 64px 80px; max-width: 1000px; }
+  .doc-header {
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-header .meta {
+    display: flex;
+    gap: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .doc-header .meta span { display: flex; gap: 6px; }
+  .doc-header .meta strong { color: var(--text-soft); font-weight: 500; }
+  h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-weight: 500;
+    font-size: 38px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .doc-header p { color: var(--text-soft); max-width: 720px; font-size: 16px; }
+
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  h2 {
+    font-family: 'IBM Plex Serif', serif;
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-weight: 600;
+    font-size: 17px;
+    margin: 28px 0 10px;
+    color: var(--text);
+  }
+  h4 {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 20px 0 8px;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  p { color: var(--text-soft); margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 600; }
+  em { color: var(--text); font-style: italic; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: var(--accent); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-soft);
+    margin: 16px 0;
+  }
+  pre code { background: none; border: none; color: inherit; padding: 0; }
+
+  ul, ol { color: var(--text-soft); margin: 10px 0 16px 0; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+
+  /* Callouts */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-left: 3px solid;
+    font-size: 14px;
+  }
+  .callout.note { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+  .callout.warn { background: var(--amber-soft); border-color: var(--amber); }
+  .callout.note strong, .callout.warn strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .callout.note strong { color: var(--accent); }
+  .callout.warn strong { color: var(--amber); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13.5px;
+  }
+  table thead { background: var(--bg-elev); }
+  table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  table tbody tr:hover { background: rgba(255, 255, 255, 0.015); }
+  table code { font-size: 12px; }
+
+  /* Diagrams */
+  .diagram {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .diagram-caption {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-style: italic;
+  }
+  .diagram svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid;
+  }
+  .badge.read { background: var(--green-soft); border-color: rgba(134, 209, 146, 0.3); color: var(--green); }
+  .badge.write { background: var(--amber-soft); border-color: rgba(245, 183, 107, 0.3); color: var(--amber); }
+  .badge.rag { background: var(--purple-soft); border-color: rgba(185, 145, 240, 0.3); color: var(--purple); }
+  .badge.multi { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent); }
+
+  /* Capability cards */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .cap-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .cap-card h4 { margin-top: 0; margin-bottom: 6px; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--accent); }
+  .cap-card p { font-size: 13px; margin: 0; }
+
+  /* Anchors — subtle hover */
+  h2, h3 { position: relative; }
+
+  @media (max-width: 1100px) {
+    .page { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 32px 32px 64px; }
+  }
+  @media (max-width: 640px) {
+    main { padding: 24px 20px 48px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 22px; }
+  }
+
+  .top-nav a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<aside>
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-text">Lumino · Tech Docs</div>
+  </div>
+  <div class="nav-label">Overview</div>
+  <nav>
+    <a href="#summary">Executive summary</a>
+    <a href="#stack">Stack &amp; dependencies</a>
+  </nav>
+  <div class="nav-label">Architecture</div>
+  <nav>
+    <a href="#architecture">System architecture</a>
+    <a href="#request-flow">Request lifecycle</a>
+    <a href="#data-model">Data model</a>
+  </nav>
+  <div class="nav-label">Bot internals</div>
+  <nav>
+    <a href="#odin">ODIN routing</a>
+    <a href="#actions">The 9 AI Actions</a>
+    <a href="#smart-import">Smart Import deep-dive</a>
+    <a href="#capabilities">BEP capabilities map</a>
+  </nav>
+  <div class="nav-label">Operations</div>
+  <nav>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#testing">Testing &amp; validation</a>
+    <a href="#gotchas">Known gotchas</a>
+  </nav>
+</aside>
+
+<main>
+
+<div class="top-nav" style="display: flex; gap: 18px; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-soft); padding-bottom: 24px; margin-bottom: 32px; border-bottom: 1px solid var(--border);">
+  <a href="/demo" style="color: var(--text-soft); text-decoration: none;">← Back to demo</a>
+  <a href="/brief" style="color: var(--text-soft); text-decoration: none;">User brief</a>
+  <span style="color: var(--text-muted); margin-left: auto;">Tech docs · v1.2</span>
+</div>
+<div class="doc-header">
+  <div class="meta">
+    <span><strong>Version:</strong> 1.2</span>
+    <span><strong>Updated:</strong> 2026-04-19</span>
+    <span><strong>Owner:</strong> Andrii Bondar</span>
+    <span><strong>Platform:</strong> BotsCrew BEP</span>
+  </div>
+  <h1>Lumino — Technical Architecture</h1>
+  <p>Reference documentation for the Lumino demo bot: a fully BEP-native AI Agent that showcases the platform's capability surface in a single 5-minute sales demo. Intended audience is technical reviewers, BotsCrew engineering, and anyone asked to extend or debug the bot.</p>
+</div>
+
+<section id="summary">
+  <h2>Executive summary</h2>
+  <p><strong>What:</strong> Lumino is an AI Agent bot on the BotsCrew Enterprise Platform (BEP) that acts as an end-user assistant for a fictional B2B expense management SaaS. It embeds in the Lumino Expense web app as a chat widget.</p>
+  <p><strong>Why:</strong> Every AI Action is deliberately mapped to a different BEP capability, so a single 5-minute demo exercises API calls, active context, generative composition, RAG, branching workflows, bulk writes, and multi-turn agentic reasoning without needing multiple bots.</p>
+  <p><strong>Design principle:</strong> <em>BEP-native only.</em> No external LLMs. No external backends beyond the fictional app's database. ODIN does all reasoning, including the schema-inference work in Smart Import that an earlier draft delegated to Gemini.</p>
+
+  <div class="callout note">
+    <strong>Live demo</strong>
+    Demo environment: <a href="https://lumino-backend-qjmep9rg3-andriirushchak-bc-codes-projects.vercel.app/demo" target="_blank" rel="noopener">lumino-backend…/demo</a>. Widget embedded bottom-right. Demo user: <code>andrii.bondar@northwind.example</code> (hardcoded, no auth flow).
+  </div>
+</section>
+
+<section id="stack">
+  <h2>Stack &amp; dependencies</h2>
+  <table>
+    <thead><tr><th style="width: 28%;">Layer</th><th style="width: 32%;">Technology</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>Conversational brain</td><td>BEP (ODIN engine, GPT-based)</td><td>Routing, intent detection, parameter extraction, active context, response composition, schema inference</td></tr>
+      <tr><td>Orchestration</td><td>BEP AI Actions + Workflows</td><td>9 Actions mapped 1:1 to 9 Workflows; Actions are tool specs, Workflows are implementation DAGs</td></tr>
+      <tr><td>Compute</td><td>BEP <code>PYTHON_EXECUTOR</code> steps</td><td>Pure computation — CSV parsing, date normalization, email resolution, bulk payload assembly</td></tr>
+      <tr><td>Data layer</td><td>Supabase (Postgres, Frankfurt region)</td><td>6 tables with auto-generated REST endpoints consumed via BEP <code>API_CALL</code> steps</td></tr>
+      <tr><td>Knowledge base</td><td>BEP Knowledge Base (RAG)</td><td>9 policy chunks indexed for semantic retrieval via <code>GET_KNOWLEDGE</code> step</td></tr>
+      <tr><td>Frontend shell</td><td>Next.js 14 (App Router) on Vercel</td><td>Fake Lumino product dashboard with KPI tiles, charts, live expense table, BEP widget embedded</td></tr>
+      <tr><td>Widget</td><td>BEP widget (JS snippet)</td><td>Cross-origin iframe, bottom-right placement, standard BEP defaults</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="architecture">
+  <h2>System architecture</h2>
+  <p>Three tiers. The user talks to the widget, the widget talks to BEP, BEP talks to Supabase. There is no intermediate backend — the frontend shell is purely a visual host for the demo, not a gateway.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lumino system architecture">
+      <defs>
+        <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#7cc4f5"/>
+        </marker>
+        <marker id="arrback" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#6b7280"/>
+        </marker>
+      </defs>
+
+      <!-- Tier 1: Frontend -->
+      <rect x="40" y="30" width="800" height="120" rx="10" fill="#161c25" stroke="rgba(124,196,245,0.2)" stroke-width="1"/>
+      <text x="60" y="58" fill="#7cc4f5" font-family="IBM Plex Sans" font-size="11" font-weight="600" letter-spacing="1">TIER 1 · FRONTEND (Next.js on Vercel)</text>
+
+      <rect x="70" y="78" width="220" height="54" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.12)"/>
+      <text x="80" y="98" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="13" font-weight="600">Lumino product shell</text>
+      <text x="80" y="116" fill="#a5acb8" font-family="IBM Plex Sans" font-size="11">Dashboard · KPIs · table · charts</text>
+
+      <rect x="310" y="78" width="220" height="54" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.12)"/>
+      <text x="320" y="98" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="13" font-weight="600">Supabase JS client</text>
+      <text x="320" y="116" fill="#a5acb8" font-family="IBM Plex Sans" font-size="11">Reads for dashboard (publishable key)</text>
+
+      <rect x="550" y="78" width="220" height="54" rx="6" fill="#0f1419" stroke="rgba(124,196,245,0.3)"/>
+      <text x="560" y="98" fill="#7cc4f5" font-family="IBM Plex Sans" font-size="13" font-weight="600">BEP widget (iframe)</text>
+      <text x="560" y="116" fill="#a5acb8" font-family="IBM Plex Sans" font-size="11">Bottom-right, cross-origin</text>
+
+      <!-- Arrow widget to BEP -->
+      <line x1="660" y1="155" x2="660" y2="195" stroke="#7cc4f5" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="670" y="180" fill="#6b7280" font-family="JetBrains Mono" font-size="10">chat session</text>
+
+      <!-- Tier 2: BEP -->
+      <rect x="40" y="205" width="800" height="170" rx="10" fill="#161c25" stroke="rgba(185,145,240,0.25)" stroke-width="1"/>
+      <text x="60" y="233" fill="#b991f0" font-family="IBM Plex Sans" font-size="11" font-weight="600" letter-spacing="1">TIER 2 · BEP (BotsCrew Enterprise Platform)</text>
+
+      <rect x="70" y="253" width="160" height="100" rx="6" fill="#0f1419" stroke="rgba(185,145,240,0.4)"/>
+      <text x="150" y="275" fill="#b991f0" font-family="IBM Plex Sans" font-size="12" font-weight="600" text-anchor="middle">ODIN</text>
+      <text x="150" y="293" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">router brain</text>
+      <text x="150" y="316" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· system prompt</text>
+      <text x="150" y="330" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· active context</text>
+      <text x="150" y="344" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· response composition</text>
+
+      <rect x="250" y="253" width="160" height="100" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.15)"/>
+      <text x="330" y="275" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="12" font-weight="600" text-anchor="middle">9 AI Actions</text>
+      <text x="330" y="293" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">tool specs</text>
+      <text x="330" y="316" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· description</text>
+      <text x="330" y="330" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· params (extraction)</text>
+      <text x="330" y="344" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· → workflow</text>
+
+      <rect x="430" y="253" width="160" height="100" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.15)"/>
+      <text x="510" y="275" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="12" font-weight="600" text-anchor="middle">9 Workflows</text>
+      <text x="510" y="293" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">implementation DAGs</text>
+      <text x="510" y="316" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· API_CALL</text>
+      <text x="510" y="330" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· PYTHON_EXECUTOR</text>
+      <text x="510" y="344" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· GET_KNOWLEDGE</text>
+
+      <rect x="610" y="253" width="160" height="100" rx="6" fill="#0f1419" stroke="rgba(134,209,146,0.3)"/>
+      <text x="690" y="275" fill="#86d192" font-family="IBM Plex Sans" font-size="12" font-weight="600" text-anchor="middle">Knowledge Base</text>
+      <text x="690" y="293" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">9 policy chunks</text>
+      <text x="690" y="316" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· Travel Policy §1–§7</text>
+      <text x="690" y="330" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· Expense Categories</text>
+      <text x="690" y="344" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">· indexed for RAG</text>
+
+      <!-- Arrows within BEP -->
+      <line x1="230" y1="303" x2="250" y2="303" stroke="#b991f0" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="410" y1="303" x2="430" y2="303" stroke="#b991f0" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="590" y1="320" x2="610" y2="320" stroke="#86d192" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arr)"/>
+
+      <!-- Arrow BEP to Supabase -->
+      <line x1="510" y1="378" x2="510" y2="418" stroke="#7cc4f5" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="520" y="403" fill="#6b7280" font-family="JetBrains Mono" font-size="10">REST API</text>
+
+      <!-- Tier 3: Data -->
+      <rect x="40" y="428" width="800" height="70" rx="10" fill="#161c25" stroke="rgba(134,209,146,0.25)" stroke-width="1"/>
+      <text x="60" y="455" fill="#86d192" font-family="IBM Plex Sans" font-size="11" font-weight="600" letter-spacing="1">TIER 3 · DATA (Supabase Postgres, Frankfurt)</text>
+      <text x="60" y="478" fill="#e6e8eb" font-family="JetBrains Mono" font-size="11">users · expenses · policy_docs · tickets · import_sessions · guests</text>
+    </svg>
+    <div class="diagram-caption">Fig. 1 — Three-tier architecture. Dashboard reads bypass BEP (they're client-side reads with the publishable key); all bot-driven reads and writes route through BEP workflows.</div>
+  </div>
+
+  <h3>Why not a unified backend?</h3>
+  <p>An earlier design placed a Next.js backend between BEP and Supabase (for Smart Import schema inference via Gemini). That was removed. Two reasons:</p>
+  <ul>
+    <li><strong>Architectural coherence:</strong> a BEP showcase bot should exercise BEP's capabilities, not hide them behind a second service.</li>
+    <li><strong>ODIN is sufficient:</strong> once the Python step delivers a CSV sample as a string, ODIN reasons about columns and proposes a mapping inline — no second LLM call needed.</li>
+  </ul>
+</section>
+
+<section id="request-flow">
+  <h2>Request lifecycle</h2>
+  <p>How a single user message becomes a reply. Reading this end-to-end clarifies where each BEP component acts.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Request lifecycle sequence">
+      <defs>
+        <marker id="arr2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#a5acb8"/>
+        </marker>
+      </defs>
+
+      <!-- Swimlanes -->
+      <line x1="110" y1="30" x2="110" y2="395" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2,4"/>
+      <line x1="280" y1="30" x2="280" y2="395" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2,4"/>
+      <line x1="470" y1="30" x2="470" y2="395" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2,4"/>
+      <line x1="660" y1="30" x2="660" y2="395" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2,4"/>
+
+      <!-- Column headers -->
+      <text x="55" y="22" fill="#7cc4f5" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">USER</text>
+      <text x="195" y="22" fill="#b991f0" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">ODIN</text>
+      <text x="375" y="22" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">WORKFLOW</text>
+      <text x="565" y="22" fill="#f5b76b" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">API / KB / PYTHON</text>
+      <text x="710" y="22" fill="#86d192" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">SUPABASE</text>
+
+      <!-- Step 1: User → ODIN -->
+      <rect x="15" y="40" width="85" height="28" rx="4" fill="rgba(124,196,245,0.1)" stroke="rgba(124,196,245,0.3)"/>
+      <text x="57" y="58" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">1. message</text>
+      <line x1="100" y1="54" x2="115" y2="54" stroke="#a5acb8" stroke-width="1.3" marker-end="url(#arr2)"/>
+
+      <!-- Step 2: ODIN thinks -->
+      <rect x="120" y="40" width="150" height="58" rx="4" fill="rgba(185,145,240,0.08)" stroke="rgba(185,145,240,0.25)"/>
+      <text x="195" y="58" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">2. route → AI Action</text>
+      <text x="195" y="75" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">extract params</text>
+      <text x="195" y="89" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">set attributes</text>
+
+      <!-- Step 3: trigger workflow -->
+      <line x1="270" y1="70" x2="288" y2="130" stroke="#a5acb8" stroke-width="1.3" marker-end="url(#arr2)"/>
+      <text x="248" y="108" fill="#6b7280" font-family="JetBrains Mono" font-size="9">handler</text>
+
+      <rect x="290" y="115" width="170" height="44" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)"/>
+      <text x="375" y="133" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">3. entry step</text>
+      <text x="375" y="149" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">read attributes</text>
+
+      <!-- Step 4: external call -->
+      <line x1="460" y1="137" x2="478" y2="180" stroke="#a5acb8" stroke-width="1.3" marker-end="url(#arr2)"/>
+
+      <rect x="480" y="170" width="170" height="56" rx="4" fill="rgba(245,183,107,0.08)" stroke="rgba(245,183,107,0.25)"/>
+      <text x="565" y="188" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">4. API_CALL or</text>
+      <text x="565" y="202" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">GET_KNOWLEDGE</text>
+      <text x="565" y="218" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">or PYTHON_EXECUTOR</text>
+
+      <!-- Step 5: supabase -->
+      <line x1="650" y1="198" x2="668" y2="198" stroke="#a5acb8" stroke-width="1.3" marker-end="url(#arr2)"/>
+      <rect x="670" y="184" width="80" height="28" rx="4" fill="rgba(134,209,146,0.08)" stroke="rgba(134,209,146,0.3)"/>
+      <text x="710" y="202" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">5. query</text>
+
+      <!-- return arrows -->
+      <line x1="668" y1="225" x2="650" y2="240" stroke="#a5acb8" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+      <rect x="480" y="234" width="170" height="28" rx="4" fill="rgba(134,209,146,0.06)" stroke="rgba(134,209,146,0.2)"/>
+      <text x="565" y="252" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">6. JSON response</text>
+
+      <line x1="478" y1="262" x2="460" y2="278" stroke="#a5acb8" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+      <rect x="290" y="275" width="170" height="44" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)"/>
+      <text x="375" y="293" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">7. set last_ai_action_result</text>
+      <text x="375" y="309" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">JSON-encoded payload</text>
+
+      <!-- ODIN composes -->
+      <line x1="290" y1="297" x2="272" y2="340" stroke="#a5acb8" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+      <rect x="120" y="335" width="150" height="44" rx="4" fill="rgba(185,145,240,0.08)" stroke="rgba(185,145,240,0.25)"/>
+      <text x="195" y="353" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">8. compose reply</text>
+      <text x="195" y="370" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">uses Knowledge reply atom</text>
+
+      <!-- ODIN → User -->
+      <line x1="115" y1="357" x2="100" y2="357" stroke="#a5acb8" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+      <rect x="15" y="343" width="85" height="28" rx="4" fill="rgba(124,196,245,0.1)" stroke="rgba(124,196,245,0.3)"/>
+      <text x="57" y="361" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" text-anchor="middle">9. reply</text>
+    </svg>
+    <div class="diagram-caption">Fig. 2 — Single-turn sequence. Steps 4–6 vary by step type: <code>API_CALL</code> hits Supabase, <code>GET_KNOWLEDGE</code> hits the KB, <code>PYTHON_EXECUTOR</code> computes locally.</div>
+  </div>
+
+  <h3>The Knowledge reply atom</h3>
+  <p>Every AI-generated reply surfaces through BEP's hardcoded <strong>Knowledge reply</strong> atom. It has no static message content — ODIN composes the response at runtime using <code>last_ai_action_result</code> (the terminal-step payload) plus the calling Action's RESPONSE FORMAT section. This is the single point where workflow output becomes user-visible text.</p>
+
+  <div class="callout note">
+    <strong>Contract</strong>
+    Every workflow that produces a user-visible reply must terminate in either (a) a Python step that writes <code>last_ai_action_result</code>, or (b) a <code>GET_KNOWLEDGE</code> step with <code>searchResultAttribute.name = "last_ai_action_result"</code>. Without this, the reply falls through to the Default atom.
+  </div>
+</section>
+
+<section id="data-model">
+  <h2>Data model</h2>
+  <p>Six Postgres tables in Supabase. Row-Level Security disabled for demo simplicity — production deployments would re-enable RLS with role-scoped policies.</p>
+
+  <table>
+    <thead><tr><th>Table</th><th>Purpose</th><th>Key columns</th></tr></thead>
+    <tbody>
+      <tr><td><code>users</code></td><td>Northwind employees and approvers</td><td><code>email</code> (PK), <code>full_name</code>, <code>manager_email</code>, <code>department</code></td></tr>
+      <tr><td><code>expenses</code></td><td>All expense submissions</td><td><code>id</code> (PK), <code>user_email</code>, <code>merchant</code>, <code>category</code>, <code>amount</code>, <code>currency</code>, <code>status</code>, <code>rejection_reason</code>, <code>approver_email</code>, <code>submitted_at</code>, <code>import_session_id</code></td></tr>
+      <tr><td><code>policy_docs</code></td><td>Expense policy chunks for RAG</td><td><code>id</code>, <code>title</code>, <code>section</code>, <code>content</code></td></tr>
+      <tr><td><code>tickets</code></td><td>Finance escalation tickets</td><td><code>id</code> (UUID), <code>user_email</code>, <code>subject</code>, <code>description</code>, <code>status</code>, <code>related_expense_id</code></td></tr>
+      <tr><td><code>import_sessions</code></td><td>Audit trail for Smart Imports</td><td><code>id</code>, <code>user_email</code>, <code>sheet_url</code>, <code>entity_type</code>, <code>detected_mapping</code> (JSONB), <code>row_count</code></td></tr>
+      <tr><td><code>guests</code></td><td>Event guests (alternative Smart Import target)</td><td><code>id</code>, <code>full_name</code>, <code>company</code>, <code>company_website</code>, <code>linkedin_url</code>, <code>import_session_id</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Seed state</h3>
+  <ul>
+    <li><strong>9 users</strong> — including demo user <code>andrii.bondar@northwind.example</code> and approver <code>maria.schmidt@northwind.example</code></li>
+    <li><strong>12 expenses</strong> — demo-ready: Uber Apr 14 (pending, sets up "check status" turn), Adlon Kempinski Berlin Apr 11 (rejected, "missing receipt over €25" — sets up "explain rejection" turn), Brasserie Lipp Apr 13, Lufthansa, WeWork, Bolt, plus historical approved/paid entries</li>
+    <li><strong>9 policy chunks</strong> — Travel Policy §1–§7 and Expense Categories. §3.2 (business class on long-haul flights ≥ 8 hours) is the target of the policy Q&amp;A demo turn</li>
+  </ul>
+</section>
+
+<section id="odin">
+  <h2>ODIN routing</h2>
+  <p>ODIN is BEP's routing LLM. It receives every user message along with a system prompt (the "ODIN prompt") that defines the bot's persona, rules, active-context behavior, and — critically — descriptions of all available AI Actions. For each turn, ODIN decides: answer from conversation alone, call an AI Action, or fall through to the Knowledge Base.</p>
+
+  <h3>Priority order</h3>
+  <pre><code>message → ODIN
+
+  ├─ matches an AI Action (by description + params fit)
+  │     └─ extract params · populate attributes · trigger workflow
+  │
+  ├─ doesn't match but relates to indexed knowledge
+  │     └─ fall through to Knowledge Base (rare in Lumino — policy_lookup action handles KB explicitly)
+  │
+  └─ doesn't match anything
+        └─ Default reply atom (sets conversation_outcome = failed)</code></pre>
+
+  <h3>The ODIN prompt (v1.2)</h3>
+  <p>~6,200 characters. Well under the 10,000 char BEP limit. Notable sections:</p>
+  <ul>
+    <li><strong>Persona &amp; tone</strong> — first-person, professional, Lumino-specific</li>
+    <li><strong>Active context rules</strong> — "the Uber one" resolves to the most recently discussed expense without re-asking</li>
+    <li><strong>Silent-state rule (v1.2)</strong> — never narrate internal state changes like "ACTIVE EXPENSE is now set..." (learned from v1.0 testing)</li>
+    <li><strong>Response style block (v1.2)</strong> — seven global rules: em-dash over double-hyphen, always lead tables with a sentence, single-bubble replies, sentence case, professional closings, specificity in composed content</li>
+    <li><strong>URL suppression (v1.2)</strong> — global rule forbidding URLs in replies (all hardcoded placeholder links removed after testing surfaced broken <code>lumino.example.com</code> references)</li>
+    <li><strong>Strict scope enforcement</strong> — off-topic queries redirected to expense domain</li>
+    <li><strong>Escalation policy</strong> — explicit triggers for human handoff</li>
+  </ul>
+</section>
+
+<section id="actions">
+  <h2>The 9 AI Actions</h2>
+  <p>Each AI Action maps 1:1 to a workflow. Actions are intent specs — their description is how ODIN decides to call them, and their params are how ODIN extracts inputs.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 4%;">#</th>
+        <th style="width: 22%;">Action</th>
+        <th style="width: 10%;">Kind</th>
+        <th style="width: 30%;">What it does</th>
+        <th>Workflow summary</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><code>lookup_my_expenses</code></td>
+        <td><span class="badge read">READ</span></td>
+        <td>Return user's N most recent expenses as a table</td>
+        <td>GET <code>/expenses</code> with <code>order=submitted_at.desc&amp;limit={{requested_count}}</code></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>check_expense_status</code></td>
+        <td><span class="badge read">READ</span></td>
+        <td>Status + approver for a specific expense — uses active context when available</td>
+        <td>Conditional: if <code>active_expense_id</code> set, lookup by ID; else fuzzy match on <code>expense_identifier</code></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>submit_expense</code></td>
+        <td><span class="badge write">WRITE</span></td>
+        <td>Extract merchant/amount/category/date, confirm, write</td>
+        <td>Python normalization (Kyiv-TZ date resolver) → POST <code>/expenses</code></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><code>find_receipt</code></td>
+        <td><span class="badge read">READ</span></td>
+        <td>Surface receipt URL or say none on file</td>
+        <td>Keyword-tightened: single distinctive word extraction (e.g. "Berlin" from "the Berlin hotel")</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><code>policy_lookup</code></td>
+        <td><span class="badge rag">RAG</span></td>
+        <td>Answer policy questions citing section numbers</td>
+        <td><code>GET_KNOWLEDGE</code> against indexed policy chunks</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><code>explain_rejection</code></td>
+        <td><span class="badge read">READ</span> + compose</td>
+        <td>Show rejection reason; on follow-up, draft a professional appeal note</td>
+        <td>GET rejected expense → compose appeal with merchant, amount, date, reason, user's defense</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><code>escalate_to_finance</code></td>
+        <td><span class="badge write">WRITE</span></td>
+        <td>Open a support ticket; return reference ID (UUID)</td>
+        <td>POST <code>/tickets</code> with <code>Prefer: return=representation</code>, extract <code>id</code> into <code>last_ai_action_result</code></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td><code>analyze_import_sheet</code></td>
+        <td><span class="badge multi">AGENTIC</span></td>
+        <td>Parse Google Sheet, have ODIN infer column mapping, flag ambiguities</td>
+        <td>Python fetches gviz CSV → packages schema + sample rows → ODIN proposes mapping inline</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td><code>confirm_import</code></td>
+        <td><span class="badge write">BULK WRITE</span></td>
+        <td>Apply mapping (with user corrections) and bulk-insert rows</td>
+        <td>Python re-fetches sheet → applies agreed mapping → 3 POSTs: <code>/expenses</code>, <code>/guests</code>, <code>/import_sessions</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Attribute wiring</h3>
+  <p>41 bot attributes store intermediate state. Notable ones:</p>
+  <ul>
+    <li><code>lumino_user_email</code> — hardcoded to <code>andrii.bondar@northwind.example</code>, simulating a logged-in user</li>
+    <li><code>active_expense_id</code> — set by <code>lookup_my_expenses</code> and <code>check_expense_status</code>, consumed by follow-up actions for silent context</li>
+    <li><code>requested_count</code> — v1.1 fix: lets users ask for "last 3" vs "last 10"</li>
+    <li><code>knowledge_search_query</code> — populated by <code>policy_lookup</code> params, fed into <code>GET_KNOWLEDGE</code></li>
+    <li><code>last_ai_action_result</code> — system attribute, the final payload every workflow must populate for Knowledge reply composition</li>
+  </ul>
+</section>
+
+<section id="smart-import">
+  <h2>Smart Import deep-dive</h2>
+  <p>The signature capability. Two-action agentic flow that reads a Google Sheet, negotiates a column mapping in conversation, and bulk-imports on confirmation.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Smart Import two-turn flow">
+      <defs>
+        <marker id="arr3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#7cc4f5"/>
+        </marker>
+      </defs>
+
+      <!-- Turn 1 box -->
+      <rect x="20" y="20" width="760" height="145" rx="10" fill="#161c25" stroke="rgba(124,196,245,0.25)"/>
+      <text x="40" y="45" fill="#7cc4f5" font-family="IBM Plex Sans" font-size="11" font-weight="600" letter-spacing="1">TURN 1 · ANALYZE (user pastes sheet URL)</text>
+
+      <rect x="40" y="65" width="130" height="80" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.12)"/>
+      <text x="105" y="85" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">analyze_import_sheet</text>
+      <text x="105" y="102" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">AI Action</text>
+      <text x="105" y="128" fill="#7cc4f5" font-family="JetBrains Mono" font-size="10" text-anchor="middle">param: sheet_url</text>
+
+      <line x1="170" y1="105" x2="188" y2="105" stroke="#7cc4f5" stroke-width="1.3" marker-end="url(#arr3)"/>
+
+      <rect x="190" y="65" width="160" height="80" rx="6" fill="#0f1419" stroke="rgba(245,183,107,0.3)"/>
+      <text x="270" y="85" fill="#f5b76b" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">PYTHON_EXECUTOR</text>
+      <text x="270" y="102" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">fetch &amp; parse</text>
+      <text x="270" y="120" fill="#e6e8eb" font-family="JetBrains Mono" font-size="10" text-anchor="middle">requests.get(gviz_url)</text>
+      <text x="270" y="134" fill="#e6e8eb" font-family="JetBrains Mono" font-size="10" text-anchor="middle">csv.reader(...)</text>
+
+      <line x1="350" y1="105" x2="368" y2="105" stroke="#7cc4f5" stroke-width="1.3" marker-end="url(#arr3)"/>
+
+      <rect x="370" y="65" width="160" height="80" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.12)"/>
+      <text x="450" y="85" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">set last_ai_action_result</text>
+      <text x="450" y="102" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">packaged schema +</text>
+      <text x="450" y="116" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">3 sample rows</text>
+      <text x="450" y="134" fill="#7cc4f5" font-family="JetBrains Mono" font-size="10" text-anchor="middle">JSON payload</text>
+
+      <line x1="530" y1="105" x2="548" y2="105" stroke="#7cc4f5" stroke-width="1.3" marker-end="url(#arr3)"/>
+
+      <rect x="550" y="65" width="210" height="80" rx="6" fill="#0f1419" stroke="rgba(185,145,240,0.4)"/>
+      <text x="655" y="85" fill="#b991f0" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">ODIN composes reply</text>
+      <text x="655" y="104" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">mapping table + ambiguities</text>
+      <text x="655" y="124" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">"F&amp;B could be Meals or</text>
+      <text x="655" y="138" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">Entertainment — which?"</text>
+
+      <!-- Between-turn: proposed_mapping held in conversation -->
+      <text x="400" y="188" fill="#6b7280" font-family="IBM Plex Sans" font-size="11" text-anchor="middle" font-style="italic">proposed_mapping held in conversation memory — user corrects in plain text</text>
+
+      <!-- Turn 2 box -->
+      <rect x="20" y="210" width="760" height="135" rx="10" fill="#161c25" stroke="rgba(245,183,107,0.3)"/>
+      <text x="40" y="235" fill="#f5b76b" font-family="IBM Plex Sans" font-size="11" font-weight="600" letter-spacing="1">TURN 2 · CONFIRM ("Map F&amp;B to Entertainment, then import.")</text>
+
+      <rect x="40" y="255" width="130" height="70" rx="6" fill="#0f1419" stroke="rgba(255,255,255,0.12)"/>
+      <text x="105" y="275" fill="#e6e8eb" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">confirm_import</text>
+      <text x="105" y="291" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">AI Action</text>
+      <text x="105" y="314" fill="#7cc4f5" font-family="JetBrains Mono" font-size="9" text-anchor="middle">final_mapping, sheet_url</text>
+
+      <line x1="170" y1="290" x2="188" y2="290" stroke="#7cc4f5" stroke-width="1.3" marker-end="url(#arr3)"/>
+
+      <rect x="190" y="255" width="180" height="70" rx="6" fill="#0f1419" stroke="rgba(245,183,107,0.3)"/>
+      <text x="280" y="275" fill="#f5b76b" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">PYTHON_EXECUTOR</text>
+      <text x="280" y="291" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">re-fetch, transform</text>
+      <text x="280" y="314" fill="#e6e8eb" font-family="JetBrains Mono" font-size="9" text-anchor="middle">apply mapping + normalize</text>
+
+      <line x1="370" y1="290" x2="388" y2="290" stroke="#7cc4f5" stroke-width="1.3" marker-end="url(#arr3)"/>
+
+      <rect x="390" y="255" width="180" height="70" rx="6" fill="#0f1419" stroke="rgba(134,209,146,0.3)"/>
+      <text x="480" y="275" fill="#86d192" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">3 × API_CALL POST</text>
+      <text x="480" y="293" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">/expenses (7 rows)</text>
+      <text x="480" y="307" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">/guests (if applicable)</text>
+      <text x="480" y="321" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">/import_sessions (audit)</text>
+
+      <line x1="570" y1="290" x2="588" y2="290" stroke="#7cc4f5" stroke-width="1.3" marker-end="url(#arr3)"/>
+
+      <rect x="590" y="255" width="170" height="70" rx="6" fill="#0f1419" stroke="rgba(185,145,240,0.4)"/>
+      <text x="675" y="275" fill="#b991f0" font-family="IBM Plex Sans" font-size="11" font-weight="600" text-anchor="middle">ODIN replies</text>
+      <text x="675" y="291" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">"Imported 7 expenses</text>
+      <text x="675" y="305" fill="#a5acb8" font-family="IBM Plex Sans" font-size="10" text-anchor="middle">successfully."</text>
+    </svg>
+    <div class="diagram-caption">Fig. 3 — Smart Import two-turn flow. Between turns, the proposed mapping lives only in conversation memory — no PATCH endpoint or persistent draft state needed. ODIN updates the proposal in response to user corrections as plain language.</div>
+  </div>
+
+  <h3>Why this design</h3>
+  <p>Smart Import is the clearest illustration of BEP's agentic capability. ODIN isn't just picking tools in sequence — between turns 1 and 2, it holds a proposed mapping as conversational state, accepts natural-language corrections, and resolves them without re-running the analysis. The user says "map F&amp;B to Entertainment" and ODIN updates its mental model; it does <em>not</em> need a mapping-edit endpoint, because the mapping isn't persisted yet.</p>
+</section>
+
+<section id="capabilities">
+  <h2>BEP capabilities map</h2>
+  <p>Every demo turn exercises a distinct BEP capability. This is the deliberate pedagogical structure of the bot.</p>
+
+  <div class="cap-grid">
+    <div class="cap-card">
+      <h4>Turn 1 · API call + table rendering</h4>
+      <p><code>lookup_my_expenses</code>: <code>API_CALL</code> GET, response extracted via JSONPath, rendered as markdown table in reply.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Turn 2 · Active context memory</h4>
+      <p><code>check_expense_status</code>: ODIN resolves "the Uber one" to <code>active_expense_id</code> set silently in turn 1.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Turn 3 · Conditional workflow</h4>
+      <p><code>explain_rejection</code>: workflow branches on whether <code>active_expense_id</code> is set or fuzzy lookup is needed.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Turn 4 · Generative composition</h4>
+      <p>Same action, appeal-drafting branch: ODIN composes a professional note grounded in real expense data — no template.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Turn 5 · RAG over KB</h4>
+      <p><code>policy_lookup</code>: <code>GET_KNOWLEDGE</code> step against indexed policy chunks, returns §3.2 with 8-hour threshold reasoning.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Turn 6 · Agentic multi-turn reasoning</h4>
+      <p><code>analyze_import_sheet</code>: Python fetches, ODIN reasons about schema, flags F&amp;B ambiguity — all in one turn, no external LLM.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Turn 7 · Branching workflow + bulk write</h4>
+      <p><code>confirm_import</code>: Python transforms, 3 parallel API_CALL POSTs to <code>/expenses</code>, <code>/guests</code>, <code>/import_sessions</code>.</p>
+    </div>
+    <div class="cap-card">
+      <h4>Implicit · Human handoff</h4>
+      <p><code>escalate_to_finance</code>: creates a ticket, returns UUID reference — the demo-able "I'll get a human involved" moment.</p>
+    </div>
+  </div>
+</section>
+
+<section id="secrets">
+  <h2>Secrets &amp; config</h2>
+
+  <h3>Secret key handling</h3>
+  <p>BEP has no dedicated secret vault. The Supabase secret key is baked directly into the API_CALL <code>headers</code> block of each write step at import time. There are <strong>5 POST steps</strong> that need the secret key:</p>
+  <ul>
+    <li><code>submit_expense_flow</code> — POST <code>/expenses</code></li>
+    <li><code>escalate_to_finance_flow</code> — POST <code>/tickets</code></li>
+    <li><code>confirm_import_flow</code> × 3 — POST <code>/expenses</code>, <code>/guests</code>, <code>/import_sessions</code></li>
+  </ul>
+
+  <div class="callout warn">
+    <strong>Operational note</strong>
+    The packaged zip contains the secret key in plaintext JSON. Do not commit it to public repositories or share outside the engineering team. If rotated, all 5 header entries must be updated via BEP's UI (or re-imported with a patched JSON).
+  </div>
+
+  <h3>Environment</h3>
+  <table>
+    <thead><tr><th>Value</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td><code>https://toxivgbqxxkanypdyekk.supabase.co</code></td><td>Supabase project URL (public)</td></tr>
+      <tr><td><code>sb_publishable_Lz-hTNqahfeJoto5-bs9NQ_5KfmAPiA</code></td><td>Publishable key for reads — safe in code</td></tr>
+      <tr><td><code>sb_secret_…</code></td><td>Service role — baked into 5 API_CALL headers only</td></tr>
+      <tr><td><code>andrii.bondar@northwind.example</code></td><td>Hardcoded demo user (bot attribute <code>lumino_user_email</code>)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="testing">
+  <h2>Testing &amp; validation</h2>
+  <p>Three iterative test runs brought the bot from v1.0 to v1.2 demo-ready.</p>
+
+  <table>
+    <thead><tr><th>Version</th><th>Run mode</th><th>Focus</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>v1.0</td><td>Claude Cowork (Chrome)</td><td>14-test matrix: 9 capabilities + 4 robustness + 1 smoke</td><td>2 blockers (state leak + hardcoded limit), 4 polish issues</td></tr>
+      <tr><td>v1.1</td><td>Manual (10 scenarios)</td><td>Fix verification + regression</td><td>2 new issues (date off-by-2, broken URLs) + polish backlog</td></tr>
+      <tr><td>v1.2</td><td>Manual (6 post-import checks)</td><td>Timezone-aware date resolver, URL suppression, response-style rules</td><td>All green — demo-ready</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Critical fixes between versions</h3>
+  <ul>
+    <li><strong>v1.1:</strong> Added <code>requested_count</code> attribute; tightened <code>find_receipt</code> keyword extraction; made Smart Import show mapping before ambiguity; extracted ticket UUID into response</li>
+    <li><strong>v1.2:</strong> Replaced ODIN-computed dates with Python-side Kyiv-TZ resolver (<code>UTC+3</code>); stripped all placeholder URLs from response templates; added global RESPONSE STYLE section enforcing em-dash, lead sentences, sentence case, professional closings</li>
+  </ul>
+</section>
+
+<section id="gotchas">
+  <h2>Known gotchas</h2>
+
+  <h3>Google Sheet CSV URL</h3>
+  <p>The Smart Import Python step uses <code>/gviz/tq?tqx=out:csv</code> rather than <code>/export?format=csv</code>. The <code>export</code> endpoint returns HTTP 400 for publicly-shared sheets without authentication; <code>gviz</code> works for "Anyone with link — Viewer." This is an undocumented Google quirk.</p>
+
+  <h3>Date resolution timezone</h3>
+  <p>The <code>submit_expense_flow</code> Python step uses a hardcoded UTC+3 offset (Europe/Kyiv summer time). This is not daylight-saving aware — during winter months it will be off by one hour, which still resolves to the correct calendar date 23 hours out of 24 but is technically fragile. A production deployment should use <code>zoneinfo("Europe/Kyiv")</code> or accept an explicit timezone attribute.</p>
+
+  <h3>Supabase RLS</h3>
+  <p>Row-Level Security is <strong>disabled</strong> on all tables for demo simplicity. Enabling RLS without adding policies will silently break read workflows (queries return empty arrays). If extending for production, add role-scoped policies and update the API_CALL headers to use user-scoped JWTs.</p>
+
+  <h3>Widget iframe focus</h3>
+  <p>The BEP widget embeds as a cross-origin iframe. Automated browser testing (e.g. Claude Cowork with Chrome extension) cannot reliably interact with the three-dot menu for session resets because of cross-origin focus restrictions. Manual testing is the current workaround; a keyboard shortcut or URL parameter for session reset would make automated QA significantly easier.</p>
+
+  <h3>Prompt budget</h3>
+  <p>ODIN prompt is at ~6,200 / 10,000 chars. Headroom for 2–3 more capability sections before needing to refactor. The AI Action descriptions count separately and are not part of this budget.</p>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>

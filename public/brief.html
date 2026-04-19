@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meet Lumino — your expense assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --ink-muted: #7a8599;
+    --paper: #faf7f2;
+    --paper-card: #ffffff;
+    --accent: #2d5eff;
+    --accent-soft: #eaf0ff;
+    --warm: #f4ead8;
+    --warm-ink: #7a5a1f;
+    --mint: #e8f3ec;
+    --mint-ink: #2d6a4a;
+    --border: rgba(26, 35, 50, 0.08);
+    --border-strong: rgba(26, 35, 50, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 32px; }
+
+  header.hero {
+    padding: 88px 0 56px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    margin-bottom: 24px;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(40px, 6vw, 60px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .lede {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 620px;
+    margin-bottom: 40px;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 16px rgba(45, 94, 255, 0.25);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(45, 94, 255, 0.35); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--paper-card); }
+  .btn svg { width: 14px; height: 14px; }
+
+  section { padding: 72px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  .section-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    font-size: 34px;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin-bottom: 20px;
+  }
+  h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    font-size: 20px;
+    margin-bottom: 8px;
+    letter-spacing: -0.005em;
+  }
+  p { color: var(--ink-soft); margin-bottom: 16px; }
+  p:last-child { margin-bottom: 0; }
+  p.body-lg { font-size: 17px; line-height: 1.65; }
+
+  .platform-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-top: 32px;
+  }
+  .platform-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid var(--accent);
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .capability-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 40px;
+  }
+  .capability {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 20px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .capability:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+  .cap-number {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    font-style: italic;
+    color: var(--accent);
+    line-height: 1;
+    padding-top: 2px;
+  }
+  .capability h3 { margin-bottom: 10px; }
+  .capability p { margin-bottom: 14px; font-size: 15px; }
+  .example-box {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .example-box .try {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .example-box .query {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .example-box .more { margin-top: 8px; font-size: 13.5px; color: var(--ink-soft); font-style: normal; }
+  .example-box .more-item {
+    display: block;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    padding: 2px 0;
+    color: var(--ink-soft);
+  }
+  .example-box .more-item::before { content: '· '; color: var(--accent); }
+
+  .feature-card {
+    background: linear-gradient(180deg, var(--warm) 0%, #f8f0df 100%);
+    border: 1px solid rgba(122, 90, 31, 0.15);
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-top: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '★';
+    position: absolute;
+    font-size: 180px;
+    top: -40px;
+    right: -30px;
+    color: rgba(122, 90, 31, 0.08);
+    line-height: 1;
+    font-family: 'Fraunces', serif;
+  }
+  .feature-card .section-label { color: var(--warm-ink); }
+  .feature-card h3 { margin-bottom: 12px; }
+  .feature-card p { color: var(--warm-ink); opacity: 0.85; }
+  .steps-list {
+    margin-top: 20px;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+  .steps-list li {
+    counter-increment: step;
+    padding: 8px 0 8px 36px;
+    position: relative;
+    color: var(--warm-ink);
+    font-size: 15px;
+  }
+  .steps-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--warm-ink);
+    color: var(--warm);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+  }
+  .steps-list li a { color: var(--warm-ink); text-decoration: underline; }
+  .inline-code {
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 13px;
+    background: rgba(122, 90, 31, 0.1);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 32px;
+  }
+  .tip {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .tip .tip-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mint-ink);
+    background: var(--mint);
+    padding: 3px 10px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .tip h4 { font-size: 15px; font-weight: 500; margin-bottom: 6px; color: var(--ink); }
+  .tip p { font-size: 14px; margin: 0; line-height: 1.55; }
+
+  footer {
+    padding: 48px 0 64px;
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--border-strong); }
+  footer .disclaimer {
+    max-width: 540px;
+    margin: 0 auto 16px;
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  @media (min-width: 760px) {
+    .capability-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 540px) {
+    header.hero { padding: 56px 0 40px; }
+    section { padding: 48px 0; }
+    .platform-card, .feature-card, .capability { padding: 24px 22px; }
+    .capability { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  nav a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav style="padding: 18px 32px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink-soft); font-family: 'Inter', sans-serif;">
+  <div style="max-width: 880px; margin: 0 auto; display: flex; gap: 18px; align-items: center;">
+    <a href="/demo" style="color: var(--ink-soft); text-decoration: none;">← Back to demo</a>
+    <span style="color: var(--ink-muted); margin-left: auto; font-weight: 600;">User brief</span>
+    <a href="/tech-docs" style="color: var(--ink-soft); text-decoration: none;">Tech docs →</a>
+  </div>
+</nav>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Live demo · Lumino Expense</div>
+    <h1>Meet Lumino,<br>your <em>expense assistant</em>.</h1>
+    <p class="lede">Submit expenses, check status, look up policy, and bulk-import from spreadsheets — all by having a normal conversation. No forms. No waiting for Finance to reply.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://lumino-backend-qjmep9rg3-andriirushchak-bc-codes-projects.vercel.app/demo" target="_blank" rel="noopener">
+        Open the demo
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H9M17 7V15"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="#how-to-use">See what to ask</a>
+    </div>
+  </div>
+</header>
+
+<section id="platform">
+  <div class="wrap">
+    <div class="section-label">About the platform</div>
+    <h2>What is Lumino Expense?</h2>
+    <p class="body-lg">Lumino Expense is a mid-market B2B spend-management platform — the kind of product finance teams use to replace paper receipts and email threads. Think of it as the app where you'd normally submit a €42 lunch receipt, track whether it got approved, and eventually get reimbursed on your next paycheck.</p>
+
+    <div class="platform-card">
+      <h3><span class="logo-mark"></span> The platform at a glance</h3>
+      <p>Lumino handles the full lifecycle of an expense: employees submit, managers approve, Finance reimburses. Every expense has a merchant, category, amount, and status (pending, approved, rejected, or paid). Company policy governs what's reimbursable — a Travel Policy spells out per-diems, hotel limits, and when business-class flights are allowed.</p>
+      <p>This demo environment has you logged in as <strong>Andrii Bondar</strong> at <strong>Northwind Corp.</strong>, with a small history of real-looking expenses and your manager Maria Schmidt set up as approver. Everything you see and submit is real-feeling data in a safe sandbox.</p>
+    </div>
+
+    <div style="margin-top: 32px;">
+      <h3 style="margin-bottom: 10px;">So why does a bot matter here?</h3>
+      <p>Because the slowest part of any expense platform isn't the software — it's the <em>friction</em> around it. Finding the right form field. Remembering policy rules. Digging through your inbox for a rejection reason. Copying 40 rows from a spreadsheet into the app one by one.</p>
+      <p>The Lumino assistant handles all of that through conversation. You ask; it does the work.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how-to-use">
+  <div class="wrap">
+    <div class="section-label">What you can ask</div>
+    <h2>Seven things the assistant does well.</h2>
+    <p class="body-lg">Open the chat icon in the bottom-right of the demo page and try any of these. You don't need to phrase things exactly — the bot understands natural language and infers what you mean.</p>
+
+    <div class="capability-grid">
+
+      <div class="capability">
+        <div class="cap-number">01</div>
+        <div>
+          <h3>List your expenses</h3>
+          <p>See what you've submitted, filtered by how many you want to see at once.</p>
+          <div class="example-box">
+            <span class="try">Try asking</span>
+            <div class="query">"Show me my last 5 expenses."</div>
+            <div class="more">
+              <span class="more-item">"Show me my last 3 expenses."</span>
+              <span class="more-item">"What have I submitted recently?"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capability">
+        <div class="cap-number">02</div>
+        <div>
+          <h3>Check a status</h3>
+          <p>The bot remembers what you just talked about — no need to repeat IDs.</p>
+          <div class="example-box">
+            <span class="try">Try asking (after the first one)</span>
+            <div class="query">"What's the status of the Uber one?"</div>
+            <div class="more">
+              <span class="more-item">"Is the Lufthansa flight approved?"</span>
+              <span class="more-item">"When will Brasserie Lipp be reimbursed?"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capability">
+        <div class="cap-number">03</div>
+        <div>
+          <h3>Submit a new expense</h3>
+          <p>Describe it in one sentence. The bot pulls out the amount, merchant, date, and category.</p>
+          <div class="example-box">
+            <span class="try">Try asking</span>
+            <div class="query">"Add a €42 lunch from yesterday at Brasserie Lipp."</div>
+            <div class="more">
+              <span class="more-item">"Submit a €28 taxi ride from last Tuesday."</span>
+              <span class="more-item">"Log €120 for office supplies today."</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capability">
+        <div class="cap-number">04</div>
+        <div>
+          <h3>Find a receipt</h3>
+          <p>Pull up the receipt file for a past expense — or get told gracefully if none is on file.</p>
+          <div class="example-box">
+            <span class="try">Try asking</span>
+            <div class="query">"Where's the receipt for the Berlin hotel?"</div>
+            <div class="more">
+              <span class="more-item">"Can I see the Lufthansa receipt?"</span>
+              <span class="more-item">"Receipt for my WeWork expense?"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capability">
+        <div class="cap-number">05</div>
+        <div>
+          <h3>Ask about policy</h3>
+          <p>Business class on long flights? Per-diem limits? The bot reads the policy docs and answers with the exact section.</p>
+          <div class="example-box">
+            <span class="try">Try asking</span>
+            <div class="query">"Can I expense business class on a 9-hour flight?"</div>
+            <div class="more">
+              <span class="more-item">"What's the hotel limit in Europe?"</span>
+              <span class="more-item">"Are client dinners reimbursable?"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capability">
+        <div class="cap-number">06</div>
+        <div>
+          <h3>Understand a rejection &amp; appeal</h3>
+          <p>When an expense is rejected, ask why — then ask the bot to draft a professional appeal note to your approver.</p>
+          <div class="example-box">
+            <span class="try">Try asking</span>
+            <div class="query">"Why was the Berlin hotel rejected?"</div>
+            <div class="more">
+              <span class="more-item">Then: "Yes — say I lost the receipt but I have my booking confirmation."</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="capability">
+        <div class="cap-number">07</div>
+        <div>
+          <h3>Escalate to Finance</h3>
+          <p>Stuck on something Finance needs to handle? The bot opens a ticket and gives you a reference number.</p>
+          <div class="example-box">
+            <span class="try">Try asking</span>
+            <div class="query">"I still haven't been reimbursed for my February expenses."</div>
+            <div class="more">
+              <span class="more-item">"Can someone from Finance review my rejected hotel?"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="smart-import">
+  <div class="wrap">
+    <div class="feature-card">
+      <div class="section-label">The signature feature</div>
+      <h3>✨ Smart Import from Google Sheets</h3>
+      <p>The real magic. Paste any Google Sheets link and the bot reads the columns, figures out how they map to Lumino's fields, flags anything ambiguous (like a "F&amp;B" column that could mean meals or entertainment), and bulk-imports once you confirm. No CSV parsing. No copy-paste marathons.</p>
+
+      <ol class="steps-list">
+        <li>Open the demo and click the chat icon in the bottom-right.</li>
+        <li>Open <a href="https://docs.google.com/spreadsheets/d/1BwKgJ2Sfe50QN0YVmEFf_riAAlqbq2qGqnWapAmfgwI/edit?usp=sharing" target="_blank" rel="noopener">this sample Google Sheet</a> (7 rows of fictional Berlin trip expenses) and make your own copy if you want to play with the data. Share settings are already "Anyone with the link — Viewer."</li>
+        <li>Paste the sheet URL into the chat. The bot will propose a column mapping and flag the <span class="inline-code">F&amp;B</span> category as ambiguous.</li>
+        <li>Reply with something like <em>"Map F&amp;B to Entertainment, then import."</em> The bot applies your correction and bulk-writes the rows.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="tips">
+  <div class="wrap">
+    <div class="section-label">Tips that make conversations smoother</div>
+    <h2>Three things worth knowing.</h2>
+
+    <div class="tips-grid">
+      <div class="tip">
+        <div class="tip-label">Conversational memory</div>
+        <h4>The bot remembers context</h4>
+        <p>After a list of expenses, you can say "the Uber one" or "the Berlin hotel" — no need to re-paste IDs or full merchant names.</p>
+      </div>
+      <div class="tip">
+        <div class="tip-label">Dates made easy</div>
+        <h4>Use natural language for dates</h4>
+        <p>"Yesterday," "last Tuesday," "April 15" — all understood. No need to type 2026-04-18 unless you want to.</p>
+      </div>
+      <div class="tip">
+        <div class="tip-label">Safety first</div>
+        <h4>Nothing writes without asking</h4>
+        <p>For submissions and imports, the bot always shows what it's about to do and waits for your confirmation before writing to the database.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="disclaimer">Lumino Expense is a fictional product, built as a demo environment to showcase BotsCrew's AI agent platform. The data, company names, and URLs inside the demo are illustrative.</p>
+    <p>
+      <a href="https://lumino-backend-qjmep9rg3-andriirushchak-bc-codes-projects.vercel.app/demo" target="_blank" rel="noopener">Open the demo</a>
+      &nbsp;·&nbsp;
+      <a href="https://docs.google.com/spreadsheets/d/1BwKgJ2Sfe50QN0YVmEFf_riAAlqbq2qGqnWapAmfgwI/edit?usp=sharing" target="_blank" rel="noopener">Test Google Sheet</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -25,8 +25,13 @@ export default function TopNav() {
           })}
         </div>
 
-        {/* Right: user info */}
+        {/* Right: doc links + user info */}
         <div style={s.right}>
+          <span style={s.docSep}>·</span>
+          <a href="/brief"     style={s.docLink}>User brief</a>
+          <span style={s.docSep}>·</span>
+          <a href="/tech-docs" style={s.docLink}>Tech docs</a>
+          <span style={s.docSep}>·</span>
           <span style={s.userName}>Andrii Bondar</span>
           <div style={s.avatar}>AB</div>
         </div>
@@ -92,6 +97,17 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: 10,
+  },
+  docLink: {
+    fontSize: 13,
+    color: '#8C8C8C',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  },
+  docSep: {
+    fontSize: 13,
+    color: '#C8C8C8',
+    userSelect: 'none',
   },
   userName: {
     fontSize: 13,
